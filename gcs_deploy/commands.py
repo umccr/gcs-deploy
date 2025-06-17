@@ -1,23 +1,18 @@
 import subprocess
 import json
 
-def run_command(cmd, capture_output=False, dry_run=False):
+def run_command(cmd, capture_output=False):
     """
     Runs a shell command using subprocess.
 
     Args:
         cmd (str): The shell command to run.
         capture_output (bool): If True, returns the command's stdout.
-        dry_run (bool): If True, only prints the command without executing.
 
     Returns:
         str or None: Output if captured, otherwise None.
     """
     print(f"\n>>> {cmd}")
-    if dry_run:
-        print("DRY RUN: Command not executed.")
-        return "" if capture_output else None
-
     result = subprocess.run(cmd, shell=True, text=True,
                             capture_output=capture_output)
     if result.stdout:
@@ -29,7 +24,7 @@ def run_command(cmd, capture_output=False, dry_run=False):
 
 def load_config(path="config.json"):
     """
-    Loads the config file from the given path.
+    Loads the config file from a json in the given path.
 
     Args:
         path (str): Path to the config file.
@@ -41,7 +36,7 @@ def load_config(path="config.json"):
     with open(path) as f:
         return json.load(f)
 
-def setup_endpoint(config, dry_run=False):
+def setup_endpoint(config):
     """
     Sets up the Globus Connect Server endpoint with metadata.
 
@@ -61,7 +56,7 @@ def setup_endpoint(config, dry_run=False):
     print(f">>> Setting up endpoint: {config['endpoint_display_name']}")
     run_command(cmd)
 
-def setup_node(dry_run=False):
+def setup_node():
     """
     Registers the current machine as a Globus Connect Server data transfer node.
 
@@ -71,7 +66,7 @@ def setup_node(dry_run=False):
     print(">>> Registering node")
     run_command(cmd)
 
-def login_localhost(dry_run=False):
+def login_localhost():
     """
     Links the Globus Connect Server to your personal Globus identity.
 
@@ -82,7 +77,7 @@ def login_localhost(dry_run=False):
     print(">>> Logging in to link your Globus identity to the endpoint")
     run_command(cmd)
 
-def create_storage_gateway(config, dry_run=False):
+def create_storage_gateway(config):
     """
     Creates a POSIX storage gateway using the identity mapping file.
 
@@ -102,7 +97,7 @@ def create_storage_gateway(config, dry_run=False):
 
 
 
-def get_gateway_id_by_name(name, dry_run=False):
+def get_gateway_id_by_name(name):
     """
     Retrieves the storage gateway ID matching the given display name.
 
@@ -133,7 +128,7 @@ def get_gateway_id_by_name(name, dry_run=False):
     raise RuntimeError(f"Gateway with name '{name}' not found.")
 
 
-def create_mapped_collection(config, dry_run=False):
+def create_mapped_collection(config):
     """
     Creates a mapped collection for a given storage gateway.
 

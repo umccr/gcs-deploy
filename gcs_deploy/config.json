@@ -5,6 +5,6 @@
   "contact_email": "felipe.jimenezibarra@unimelb.edu.au",
   "gateway_name": "EC2 Gateway",
   "user_domain": "unimelb.edu.au",
-  "collection_name": "EC2 Collection Test",
+  "collection_name": "Automatic EC2 Collection Test",
   "collection_path": "/home/ubuntu/"
 }
