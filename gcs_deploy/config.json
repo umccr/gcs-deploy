@@ -1,0 +1,10 @@
+{
+  "endpoint_display_name": "globus-test-ec2",
+  "organization": "The University of Melbourne",
+  "owner": "fjimenezibar@unimelb.edu.au",
+  "contact_email": "felipe.jimenezibarra@unimelb.edu.au",
+  "gateway_name": "EC2 Gateway",
+  "user_domain": "unimelb.edu.au",
+  "collection_name": "EC2 Collection Test",
+  "collection_path": "/home/ubuntu/"
+}
