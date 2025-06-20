@@ -146,3 +146,67 @@ def create_mapped_collection(config):
     )
     print(f">>> Creating mapped collection: {config['collection_name']}")
     run_command(cmd)
+
+
+def destroy(config):
+    """
+    Cleans up the Globus Connect Server setup by:
+    1. Deleting the mapped collection
+    2. Deleting the storage gateway
+    3. Cleaning up the endpoint (removes the endpoint config)
+
+    Args:
+        config (dict): Must include:
+            - collection_name (str): Display name of the mapped collection
+            - gateway_name (str): Display name of the storage gateway
+            - deployment_key_path (str): Path to deployment key (usually 'deployment-key.json')
+    """
+    # Step 1: Delete the mapped collection
+    try:
+        collections_out = run_command(
+            "globus-connect-server collection list --format json",
+            capture_output=True
+        )
+        collections = json.loads(collections_out)
+        collection_id = next(
+            c["id"] for c in collections if c["display_name"] == config["collection_name"]
+        )
+        run_command(f"globus-connect-server collection update {collection_id} --no-delete-protected")
+        run_command(f"globus-connect-server collection delete {collection_id}")
+        print(f">>> Collection '{config['collection_name']}' deleted.")
+    except Exception as e:
+        print(f"!!! Failed to delete collection: {e}")
+
+    # Step 2: Delete the storage gateway
+    try:
+        gateway_id = get_gateway_id_by_name(config["gateway_name"])
+        run_command(f"globus-connect-server storage-gateway delete {gateway_id}")
+        print(f">>> Storage gateway '{config['gateway_name']}' deleted.")
+    except Exception as e:
+        print(f"!!! Failed to delete storage gateway: {e}")
+
+    # Step 3: Cleanup local node
+    try:
+        run_command("sudo globus-connect-server node cleanup")
+        print(">>> Node cleanup complete.")
+    except Exception as e:
+        print(f"!!! Failed to cleanup node: {e}")
+    
+    # Step 4: Cleanup endpoint
+    try:
+        run_command(f"sudo globus-connect-server endpoint cleanup -d {config['deployment_key_path']}")
+        print(">>> Endpoint cleanup complete.")
+    except Exception as e:
+        print(f"!!! Failed to cleanup endpoint: {e}")
+
+    # Step 5: Logout from Globus GCS session    
+    print(">>> Logging out of Globus GCS session")
+    run_command("globus-connect-server logout")
+
+    # Step 6: Restart Apache services
+    try:
+        run_command("sudo systemctl restart apache2")
+        run_command("sudo systemctl reload apache2")
+        print(">>> Apache services restarted and reloaded.")
+    except Exception as e:
+        print(f"!!! Failed to restart Apache: {e}")
