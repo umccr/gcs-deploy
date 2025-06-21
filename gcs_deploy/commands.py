@@ -86,11 +86,15 @@ def create_storage_gateway(config):
             - gateway_name (str): Human-readable name for the gateway
             - user_domain (str): Identity domain allowed to access it
     """
+
+    # read the identity map from the config:
+    identity_mapping_str = json.dumps(config["identity_mapping"])
+
     cmd = (
         f"globus-connect-server storage-gateway create posix "
         f"\"{config['gateway_name']}\" "
         f"--domain {config['user_domain']} "
-        f"--identity-mapping file:gcs_deploy/identity_mapping.json"
+        f"--identity-mapping '{identity_mapping_str}'"
     )
     print(f">>> Creating storage gateway: {config['gateway_name']}")
     run_command(cmd)
@@ -194,19 +198,20 @@ def destroy(config):
     
     # Step 4: Cleanup endpoint
     try:
-        run_command(f"sudo globus-connect-server endpoint cleanup -d {config['deployment_key_path']}")
+        run_command(f"sudo globus-connect-server endpoint cleanup -d {config['deployment_key_path']} --agree-to-delete-endpoint")
         print(">>> Endpoint cleanup complete.")
     except Exception as e:
         print(f"!!! Failed to cleanup endpoint: {e}")
 
-    # Step 5: Logout from Globus GCS session    
-    print(">>> Logging out of Globus GCS session")
-    run_command("globus-connect-server logout")
-
-    # Step 6: Restart Apache services
+    # Step 5: Restart Apache services
     try:
         run_command("sudo systemctl restart apache2")
         run_command("sudo systemctl reload apache2")
         print(">>> Apache services restarted and reloaded.")
     except Exception as e:
         print(f"!!! Failed to restart Apache: {e}")
+
+    # Step 6: Logout from Globus GCS session    
+    print(">>> Logging out of Globus GCS session")
+    run_command("globus-connect-server logout")
+
