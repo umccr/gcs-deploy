@@ -48,6 +48,10 @@ This sets up:
 - A storage gateway (POSIX)
 - A mapped collection
 
+
+During the deployment process, you will be prompted to log in manually twice to complete the Globus endpoint registration and authentication steps.
+
+
 ### Destroy
 
 ```bash
@@ -61,6 +65,11 @@ This tears down the above setup (in reverse):
 - Cleans up the node and endpoint
 - Restarts Apache services
 
+
+During destroy, you will be prompted once for authentication to authorize the removal of the Globus endpoint.
+
+
+
 ---
 
 ## Endpoint Configuration Params: `config.json`
@@ -73,10 +82,10 @@ You must provide a JSON file like this:
   "organization": "The University of Melbourne",
   "owner": "fjimenezibar@unimelb.edu.au",
   "contact_email": "felipe.jimenezibarra@unimelb.edu.au",
-  "gateway_name": "EC2 Gateway",
+  "gateway_name": "My Host Gateway",
   "user_domain": "unimelb.edu.au",
-  "collection_name": "Automatic EC2 Collection Test",
-  "collection_path": "/home/ubuntu/",
+  "collection_name": "My Collection",
+  "collection_path": "/home/my-user/",
   "deployment_key_path": "deployment-key.json",
   "identity_mapping": {
     "DATA_TYPE": "expression_identity_mapping#1.0.0",
@@ -84,7 +93,7 @@ You must provide a JSON file like this:
       {
         "source": "{username}",
         "match": ".*@unimelb\.edu\.au",
-        "output": "ubuntu"
+        "output": "my-user"
       }
     ]
   }
