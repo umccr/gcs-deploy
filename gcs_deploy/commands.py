@@ -53,8 +53,8 @@ def setup_endpoint(config):
         f"globus-connect-server endpoint setup \"{config['endpoint_display_name']}\" "
         f"--organization \"{config['organization']}\" "
         f"--owner \"{config['owner']}\" "
-        f"--contact-email \"{config['contact_email']}\""
-        f"--project-name \"{config['project_name']}\""
+        f"--contact-email \"{config['contact_email']}\" "
+        f"--project-name \"{config['project_name']}\" "
     )
     print(f">>> Setting up endpoint: {config['endpoint_display_name']}")
     run_command(cmd)
