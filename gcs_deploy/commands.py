@@ -49,14 +49,27 @@ def setup_endpoint(config):
             - project_id (str): Globus Project UUID under which to register the endpoint
 
     """
+    endpoint_config = config["endpoint"]
+    display_name = endpoint_config["endpoint_display_name"]
+    organization = endpoint_config["organization"]
+    owner = endpoint_config["owner"]
+    contact_email = endpoint_config["contact_email"]
+    project_name = endpoint_config["project_name"]
+    private = endpoint_config["private"]
+    if private:
+        visible = "--private " 
+    else:
+        visible = "--public "  
+
     cmd = (
-        f"globus-connect-server endpoint setup \"{config['endpoint_display_name']}\" "
-        f"--organization \"{config['organization']}\" "
-        f"--owner \"{config['owner']}\" "
-        f"--contact-email \"{config['contact_email']}\" "
-        f"--project-name \"{config['project_name']}\" "
+        f"globus-connect-server endpoint setup \"{display_name}\" "
+        f"--organization \"{organization}\" "
+        f"--owner \"{owner}\" "
+        f"--contact-email \"{contact_email}\" "
+        f"--project-name \"{project_name}\" "
+        f"{visible}"
     )
-    print(f">>> Setting up endpoint: {config['endpoint_display_name']}")
+    print(f">>> Setting up endpoint: {display_name}")
     run_command(cmd)
 
 def setup_node():
@@ -89,17 +102,20 @@ def create_storage_gateway(config):
             - gateway_name (str): Human-readable name for the gateway
             - user_domain (str): Identity domain allowed to access it
     """
-
+    gateway_config = config["gateway"]
+    gateway_name = gateway_config['gateway_name']
+    user_domain = gateway_config["user_domain"]
+    identity_mapping = gateway_config["identity_mapping"] 
     # read the identity map from the config:
-    identity_mapping_str = json.dumps(config["identity_mapping"])
-
+    identity_mapping_str = json.dumps(identity_mapping)
+    
     cmd = (
         f"globus-connect-server storage-gateway create posix "
-        f"\"{config['gateway_name']}\" "
-        f"--domain {config['user_domain']} "
+        f"\"{gateway_name}\" "
+        f"--domain {user_domain} "
         f"--identity-mapping '{identity_mapping_str}'"
     )
-    print(f">>> Creating storage gateway: {config['gateway_name']}")
+    print(f">>> Creating storage gateway: {gateway_name}")
     run_command(cmd)
 
 
@@ -145,13 +161,21 @@ def create_mapped_collection(config):
             - collection_name (str): Name shown in the Globus Web UI
             - collection_path (str): Local path exposed to users
     """
-    gateway_id = get_gateway_id_by_name(config["gateway_name"])
+
+    gateway_config = config["gateway"]
+    gateway_name = gateway_config['gateway_name']
+    gateway_id = get_gateway_id_by_name(gateway_name)
+
+    collection_config = config["collection"]
+    collection_name = collection_config['collection_name']
+    collection_path = collection_config['collection_path']
+
     cmd = (
         f"globus-connect-server collection create {gateway_id} "
-        f"{config['collection_path']} \"{config['collection_name']}\" "
+        f"{collection_path} \"{collection_name}\" "
         f"--public"
     )
-    print(f">>> Creating mapped collection: {config['collection_name']}")
+    print(f">>> Creating mapped collection: {collection_name}")
     run_command(cmd)
 
 
@@ -168,6 +192,13 @@ def destroy(config):
             - gateway_name (str): Display name of the storage gateway
             - deployment_key_path (str): Path to deployment key (usually 'deployment-key.json')
     """
+
+    collection_config = config["collection"]
+    collection_name = collection_config['collection_name']
+
+    gateway_config = config["gateway"]
+    gateway_name = gateway_config['gateway_name']
+
     # Step 1: Delete the mapped collection
     try:
         collections_out = run_command(
@@ -176,19 +207,19 @@ def destroy(config):
         )
         collections = json.loads(collections_out)
         collection_id = next(
-            c["id"] for c in collections if c["display_name"] == config["collection_name"]
+            c["id"] for c in collections if c["display_name"] == collection_name
         )
         run_command(f"globus-connect-server collection update {collection_id} --no-delete-protected")
         run_command(f"globus-connect-server collection delete {collection_id}")
-        print(f">>> Collection '{config['collection_name']}' deleted.")
+        print(f">>> Collection '{collection_name}' deleted.")
     except Exception as e:
         print(f"!!! Failed to delete collection: {e}")
 
     # Step 2: Delete the storage gateway
     try:
-        gateway_id = get_gateway_id_by_name(config["gateway_name"])
+        gateway_id = get_gateway_id_by_name(gateway_name)
         run_command(f"globus-connect-server storage-gateway delete {gateway_id}")
-        print(f">>> Storage gateway '{config['gateway_name']}' deleted.")
+        print(f">>> Storage gateway '{gateway_name}' deleted.")
     except Exception as e:
         print(f"!!! Failed to delete storage gateway: {e}")
 
