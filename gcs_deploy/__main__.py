@@ -14,6 +14,16 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Globus Connect Server deployment tool")
     parser.add_argument("command", choices=["deploy", "destroy"], help="Action to perform")
     parser.add_argument("config_path", help="Path to config file")
+
+ # Flag to control DataDock mapped collection creation (default: skip)
+    parser.add_argument(
+        "--data-dock",
+        dest="data_dock",
+        action=argparse.BooleanOptionalAction,  # gives --data-dock / --no-data-dock
+        default=False,
+        help="Create the DataDock mapped collection during deploy (default: off).",
+    )
+     
     return parser.parse_args()
 
 
@@ -26,7 +36,8 @@ def main():
         setup_node()
         login_localhost()
         create_storage_gateway(config)
-        create_mapped_collection(config)
+        if args.data_dock:
+            create_mapped_collection(config) 
 
     elif args.command == "destroy":
         destroy(config)

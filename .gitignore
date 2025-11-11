@@ -3,3 +3,22 @@
 
 # Ignore all JSON configuration files
 config_*.json
+
+# Packaging / build
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Tool caches
+.mypy_cache/
+.pytest_cache/
+
+# Local env & OS
+.venv/
+*.log
+.DS_Store

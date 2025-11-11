@@ -1,5 +1,7 @@
 import subprocess
 import json
+from pathlib import Path
+import shlex
 
 def run_command(cmd, capture_output=False):
     """
@@ -170,6 +172,11 @@ def create_mapped_collection(config):
     collection_name = collection_config['collection_name']
     collection_path = collection_config['collection_path']
 
+ 
+    # 1) Create the whole collection path 
+    Path(collection_path).mkdir(parents=True, exist_ok=True)
+
+    # 2) Create the mapped collection
     cmd = (
         f"globus-connect-server collection create {gateway_id} "
         f"{collection_path} \"{collection_name}\" "
