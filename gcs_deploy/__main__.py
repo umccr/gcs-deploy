@@ -26,9 +26,17 @@ def parse_args():
      
     return parser.parse_args()
 
+import shutil, sys
+
+
+def ensure_gcs_installed():
+    if shutil.which("globus-connect-server") is None:
+        sys.exit("ERROR: globus-connect-server not found.")
+
 
 def main():
     args = parse_args()
+    ensure_gcs_installed()
     config = load_config(args.config_path)
 
     if args.command == "deploy":
