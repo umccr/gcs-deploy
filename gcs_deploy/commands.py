@@ -68,21 +68,18 @@ def setup_endpoint(config):
         visible = "--public "  
 
     cmd = (
-
         f"GCS_CLI_CLIENT_ID={GCS_CLI_CLIENT_ID} "
         f"GCS_CLI_CLIENT_SECRET={GCS_CLI_CLIENT_SECRET} "
         f"globus-connect-server endpoint setup \"{display_name}\" "
-        f"--owner \"{GCS_CLI_CLIENT_ID}\"@clients.auth.globus.org"
-        # f"--project-name \"{project_name}\" "
+        f"--owner \"{GCS_CLI_CLIENT_ID}@clients.auth.globus.org\" "
         f"--project-id \"{project_id}\" "
-        f"--organization Globus "
-        f"--contact-email support@globus.org"
-        f" --agree-to-letsencrypt-tos "
-        f" --dont-set-advertised-owner "
-
-
-    #     f"{visible}"
+        f"--organization \"Globus\" "
+        f"--contact-email \"support@globus.org\" "
+        f"--agree-to-letsencrypt-tos "
+        f"--dont-set-advertised-owner"
     )
+    #     f"{visible}"
+    
     print(f">>> Setting up endpoint: {display_name}")
     run_command(cmd)
 
