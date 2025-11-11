@@ -57,19 +57,31 @@ def setup_endpoint(config):
     owner = endpoint_config["owner"]
     contact_email = endpoint_config["contact_email"]
     project_name = endpoint_config["project_name"]
+    project_id = endpoint_config["project_id"]
     private = endpoint_config["private"]
+    GCS_CLI_CLIENT_ID = config.get("GCS_CLI_CLIENT_ID")
+    GCS_CLI_CLIENT_SECRET = config.get("GCS_CLI_CLIENT_SECRET")
+
     if private:
         visible = "--private " 
     else:
         visible = "--public "  
 
     cmd = (
+
+        f"GCS_CLI_CLIENT_ID={GCS_CLI_CLIENT_ID} "
+        f"GCS_CLI_CLIENT_SECRET={GCS_CLI_CLIENT_SECRET} "
         f"globus-connect-server endpoint setup \"{display_name}\" "
-        f"--organization \"{organization}\" "
-        f"--owner \"{owner}\" "
-        f"--contact-email \"{contact_email}\" "
-        f"--project-name \"{project_name}\" "
-        f"{visible}"
+        f"--owner \"{GCS_CLI_CLIENT_ID}\"@clients.auth.globus.org"
+        # f"--project-name \"{project_name}\" "
+        f"--project-id \"{project_id}\" "
+        f"--organization Globus "
+        f"--contact-email support@globus.org"
+        f" --agree-to-letsencrypt-tos "
+        f" --dont-set-advertised-owner "
+
+
+    #     f"{visible}"
     )
     print(f">>> Setting up endpoint: {display_name}")
     run_command(cmd)
