@@ -38,11 +38,11 @@ def main():
     args = parse_args()
     ensure_gcs_installed()
     config = read_json(args.config_path)
-    
+
     if args.command == "deploy":
         setup_endpoint(config)
         setup_node()
-        # create_storage_gateway(config)
+        create_storage_gateway(config)
         # if args.data_dock:
         #     create_mapped_collection(config) 
         # login_localhost()
