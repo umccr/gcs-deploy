@@ -172,16 +172,29 @@ def create_mapped_collection(config):
     collection_name = collection_config['collection_name']
     collection_path = collection_config['collection_path']
 
- 
+    # Endpoint info for authentication
+    GCS_CLI_CLIENT_ID = config.get("GCS_CLI_CLIENT_ID")
+    GCS_CLI_CLIENT_SECRET = config.get("GCS_CLI_CLIENT_SECRET")
+    info_path = config["info_path"]
+    GCS_CLI_ENDPOINT_ID = read_json(info_path).get("endpoint_id")
+
+
     # 1) Create the whole collection path 
     Path(collection_path).mkdir(parents=True, exist_ok=True)
 
     # 2) Create the mapped collection
+
+
+
     cmd = (
-        f"globus-connect-server collection create {gateway_id} "
-        f"{collection_path} \"{collection_name}\" "
-        f"--public"
+    f"GCS_CLI_CLIENT_ID={GCS_CLI_CLIENT_ID} "
+    f"GCS_CLI_CLIENT_SECRET={GCS_CLI_CLIENT_SECRET} "
+    f"GCS_CLI_ENDPOINT_ID={GCS_CLI_ENDPOINT_ID} "
+    f"globus-connect-server collection create {gateway_id} "
+    f"{collection_path} \"{collection_name}\" "
+    f"--public"
     )
+
     print(f">>> Creating mapped collection: {collection_name}")
     run_command(cmd)
 
