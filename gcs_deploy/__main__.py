@@ -44,7 +44,7 @@ def main():
         setup_node()
         create_storage_gateway(config)
         # if args.data_dock:
-        #     create_mapped_collection(config) 
+        create_mapped_collection(config) 
         # login_localhost()
 
     elif args.command == "destroy":
