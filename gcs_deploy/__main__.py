@@ -1,6 +1,6 @@
 import argparse
 from gcs_deploy.commands import (
-    load_config,
+    read_json,
     setup_endpoint,
     setup_node,
     login_localhost,
@@ -37,8 +37,8 @@ def ensure_gcs_installed():
 def main():
     args = parse_args()
     ensure_gcs_installed()
-    config = load_config(args.config_path)
-
+    config = read_json(args.config_path)
+    
     if args.command == "deploy":
         setup_endpoint(config)
         setup_node()

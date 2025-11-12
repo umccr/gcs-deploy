@@ -24,7 +24,7 @@ def run_command(cmd, capture_output=False):
     if capture_output:
         return result.stdout.strip()
 
-def load_config(path="config.json"):
+def read_json(path):
     """
     Loads the config file from a json in the given path.
 
@@ -34,7 +34,6 @@ def load_config(path="config.json"):
     Returns:
         dict: Parsed configuration values.
     """
-    import json
     with open(path) as f:
         return json.load(f)
 
@@ -54,18 +53,12 @@ def setup_endpoint(config):
     endpoint_config = config["endpoint"]
     display_name = endpoint_config["endpoint_display_name"]
     organization = endpoint_config["organization"]
-    owner = endpoint_config["owner"]
     contact_email = endpoint_config["contact_email"]
     project_name = endpoint_config["project_name"]
     project_id = endpoint_config["project_id"]
     private = endpoint_config["private"]
     GCS_CLI_CLIENT_ID = config.get("GCS_CLI_CLIENT_ID")
     GCS_CLI_CLIENT_SECRET = config.get("GCS_CLI_CLIENT_SECRET")
-
-    if private:
-        visible = "--private " 
-    else:
-        visible = "--public "  
 
     cmd = (
         f"GCS_CLI_CLIENT_ID={GCS_CLI_CLIENT_ID} "
@@ -78,7 +71,6 @@ def setup_endpoint(config):
         f"--agree-to-letsencrypt-tos "
         f"--dont-set-advertised-owner"
     )
-    #     f"{visible}"
     
     print(f">>> Setting up endpoint: {display_name}")
     run_command(cmd)
@@ -93,16 +85,6 @@ def setup_node():
     print(">>> Registering node")
     run_command(cmd)
 
-def login_localhost():
-    """
-    Links the Globus Connect Server to your personal Globus identity.
-
-    This step opens a browser-based login to authenticate and authorize
-    you as the administrator of the endpoint.
-    """
-    cmd = "globus-connect-server login localhost"
-    print(">>> Logging in to link your Globus identity to the endpoint")
-    run_command(cmd)
 
 def create_storage_gateway(config):
     """
@@ -119,38 +101,25 @@ def create_storage_gateway(config):
     identity_mapping = gateway_config["identity_mapping"] 
     # read the identity map from the config:
     identity_mapping_str = json.dumps(identity_mapping)
+
+    # Endpoint info for authentication
+    GCS_CLI_CLIENT_ID = config.get("GCS_CLI_CLIENT_ID")
+    GCS_CLI_CLIENT_SECRET = config.get("GCS_CLI_CLIENT_SECRET")
+    info_path = config["info_path"]
+    GCS_CLI_ENDPOINT_ID = read_json(info_path).get("endpoint_id")
     
-    # cmd = (
-    #     f"globus-connect-server storage-gateway create posix "
-    #     f"\"{gateway_name}\" "
-    #     f"--domain {user_domain} "
-    #     f"--identity-mapping '{identity_mapping_str}'"
-    # )
     cmd = (
         f"GCS_CLI_CLIENT_ID={GCS_CLI_CLIENT_ID} "
         f"GCS_CLI_CLIENT_SECRET={GCS_CLI_CLIENT_SECRET} "
         f"GCS_CLI_ENDPOINT_ID={GCS_CLI_ENDPOINT_ID} "
-        
-        f"globus-connect-server endpoint setup \"{display_name}\" "
-        f"--owner \"{GCS_CLI_CLIENT_ID}@clients.auth.globus.org\" "
-        f"--project-id \"{project_id}\" "
-        f"--organization \"{organization}\" "
-        f"--contact-email \"{contact_email}\" "
-        f"--agree-to-letsencrypt-tos "
-        f"--dont-set-advertised-owner"
-    )
-
-    cmd = (
         f"globus-connect-server storage-gateway create posix "
         f"\"{gateway_name}\" "
         f"--domain {user_domain} "
         f"--identity-mapping '{identity_mapping_str}'"
     )
 
-
     print(f">>> Creating storage gateway: {gateway_name}")
     run_command(cmd)
-
 
 
 def get_gateway_id_by_name(name):
@@ -216,6 +185,16 @@ def create_mapped_collection(config):
     print(f">>> Creating mapped collection: {collection_name}")
     run_command(cmd)
 
+def login_localhost():
+    """
+    Links the Globus Connect Server to your personal Globus identity.
+
+    This step opens a browser-based login to authenticate and authorize
+    you as the administrator of the endpoint.
+    """
+    cmd = "globus-connect-server login localhost"
+    print(">>> Logging in to link your Globus identity to the endpoint")
+    run_command(cmd)
 
 def destroy(config):
     """
