@@ -73,8 +73,8 @@ def setup_endpoint(config):
         f"globus-connect-server endpoint setup \"{display_name}\" "
         f"--owner \"{GCS_CLI_CLIENT_ID}@clients.auth.globus.org\" "
         f"--project-id \"{project_id}\" "
-        f"--organization \"Globus\" "
-        f"--contact-email \"support@globus.org\" "
+        f"--organization \"{organization}\" "
+        f"--contact-email \"{contact_email}\" "
         f"--agree-to-letsencrypt-tos "
         f"--dont-set-advertised-owner"
     )
@@ -120,12 +120,34 @@ def create_storage_gateway(config):
     # read the identity map from the config:
     identity_mapping_str = json.dumps(identity_mapping)
     
+    # cmd = (
+    #     f"globus-connect-server storage-gateway create posix "
+    #     f"\"{gateway_name}\" "
+    #     f"--domain {user_domain} "
+    #     f"--identity-mapping '{identity_mapping_str}'"
+    # )
+    cmd = (
+        f"GCS_CLI_CLIENT_ID={GCS_CLI_CLIENT_ID} "
+        f"GCS_CLI_CLIENT_SECRET={GCS_CLI_CLIENT_SECRET} "
+        f"GCS_CLI_ENDPOINT_ID={GCS_CLI_ENDPOINT_ID} "
+        
+        f"globus-connect-server endpoint setup \"{display_name}\" "
+        f"--owner \"{GCS_CLI_CLIENT_ID}@clients.auth.globus.org\" "
+        f"--project-id \"{project_id}\" "
+        f"--organization \"{organization}\" "
+        f"--contact-email \"{contact_email}\" "
+        f"--agree-to-letsencrypt-tos "
+        f"--dont-set-advertised-owner"
+    )
+
     cmd = (
         f"globus-connect-server storage-gateway create posix "
         f"\"{gateway_name}\" "
         f"--domain {user_domain} "
         f"--identity-mapping '{identity_mapping_str}'"
     )
+
+
     print(f">>> Creating storage gateway: {gateway_name}")
     run_command(cmd)
 
