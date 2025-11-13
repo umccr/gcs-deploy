@@ -4,7 +4,6 @@ from gcs_deploy.commands import (
     setup_endpoint,
     setup_node,
     change_endpoint_owner,
-    login_localhost,
     create_storage_gateway,
     create_mapped_collection,
     destroy,
