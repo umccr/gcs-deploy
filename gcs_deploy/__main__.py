@@ -3,6 +3,7 @@ from gcs_deploy.commands import (
     read_json,
     setup_endpoint,
     setup_node,
+    change_endpoint_owner,
     login_localhost,
     create_storage_gateway,
     create_mapped_collection,
@@ -45,7 +46,7 @@ def main():
         create_storage_gateway(config)
         # if args.data_dock:
         create_mapped_collection(config) 
-        # login_localhost()
+        change_endpoint_owner(config)
 
     elif args.command == "destroy":
         destroy(config)

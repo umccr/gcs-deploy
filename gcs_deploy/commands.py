@@ -36,6 +36,48 @@ def read_json(path):
     """
     with open(path) as f:
         return json.load(f)
+def get_gateway_id_by_name(
+        name,
+        GCS_CLI_CLIENT_ID,
+        GCS_CLI_CLIENT_SECRET,
+        GCS_CLI_ENDPOINT_ID,
+    ):
+    """
+    Retrieves the storage gateway ID matching the given display name.
+
+    Args:
+        name (str): The display name of the storage gateway.
+
+    Returns:
+        str: The storage gateway ID (UUID).
+
+    Raises:
+        RuntimeError: If the gateway name is not found.
+    """
+
+    cmd = (
+    f"GCS_CLI_CLIENT_ID={GCS_CLI_CLIENT_ID} "
+    f"GCS_CLI_CLIENT_SECRET={GCS_CLI_CLIENT_SECRET} "
+    f"GCS_CLI_ENDPOINT_ID={GCS_CLI_ENDPOINT_ID} "
+    f"globus-connect-server storage-gateway list --format json"
+    )
+    output = run_command(
+        cmd,
+        capture_output=True
+    )
+
+    try:
+        result = json.loads(output)
+        gateway_list = result[0]["data"]
+    except (json.JSONDecodeError, KeyError, IndexError) as e:
+        raise RuntimeError("Failed to parse storage-gateway list output") from e
+
+    for gw in gateway_list:
+        if gw.get("display_name") == name:
+            return gw.get("id")
+
+    raise RuntimeError(f"Gateway with name '{name}' not found.")
+
 
 def setup_endpoint(config):
     """
@@ -122,48 +164,6 @@ def create_storage_gateway(config):
     run_command(cmd)
 
 
-def get_gateway_id_by_name(
-        name,
-        GCS_CLI_CLIENT_ID,
-        GCS_CLI_CLIENT_SECRET,
-        GCS_CLI_ENDPOINT_ID,
-    ):
-    """
-    Retrieves the storage gateway ID matching the given display name.
-
-    Args:
-        name (str): The display name of the storage gateway.
-
-    Returns:
-        str: The storage gateway ID (UUID).
-
-    Raises:
-        RuntimeError: If the gateway name is not found.
-    """
-
-    cmd = (
-    f"GCS_CLI_CLIENT_ID={GCS_CLI_CLIENT_ID} "
-    f"GCS_CLI_CLIENT_SECRET={GCS_CLI_CLIENT_SECRET} "
-    f"GCS_CLI_ENDPOINT_ID={GCS_CLI_ENDPOINT_ID} "
-    f"globus-connect-server storage-gateway list --format json"
-    )
-    output = run_command(
-        cmd,
-        capture_output=True
-    )
-
-    try:
-        result = json.loads(output)
-        gateway_list = result[0]["data"]
-    except (json.JSONDecodeError, KeyError, IndexError) as e:
-        raise RuntimeError("Failed to parse storage-gateway list output") from e
-
-    for gw in gateway_list:
-        if gw.get("display_name") == name:
-            return gw.get("id")
-
-    raise RuntimeError(f"Gateway with name '{name}' not found.")
-
 
 def create_mapped_collection(config):
     """
@@ -212,16 +212,37 @@ def create_mapped_collection(config):
     print(f">>> Creating mapped collection: {collection_name}")
     run_command(cmd)
 
-def login_localhost():
-    """
-    Links the Globus Connect Server to your personal Globus identity.
+def change_endpoint_owner(config):
 
-    This step opens a browser-based login to authenticate and authorize
-    you as the administrator of the endpoint.
-    """
-    cmd = "globus-connect-server login localhost"
-    print(">>> Logging in to link your Globus identity to the endpoint")
-    run_command(cmd)
+    endpoint_config = config["endpoint"]
+    owner = endpoint_config["owner"]
+
+    # Endpoint info for authentication
+    GCS_CLI_CLIENT_ID = config.get("GCS_CLI_CLIENT_ID")
+    GCS_CLI_CLIENT_SECRET = config.get("GCS_CLI_CLIENT_SECRET")
+    info_path = config["info_path"]
+    GCS_CLI_ENDPOINT_ID = read_json(info_path).get("endpoint_id")
+  
+    cmd = (
+        f"GCS_CLI_CLIENT_ID={GCS_CLI_CLIENT_ID} "
+        f"GCS_CLI_CLIENT_SECRET={GCS_CLI_CLIENT_SECRET} "
+        f"GCS_CLI_ENDPOINT_ID={GCS_CLI_ENDPOINT_ID} "
+        f"globus-connect-server endpoint set-owner {owner}"
+    )
+    print(f">>> Changing endpoint owner to: {owner}")
+    run_command(cmd)    
+
+
+# def login_localhost():
+#     """
+#     Links the Globus Connect Server to your personal Globus identity.
+
+#     This step opens a browser-based login to authenticate and authorize
+#     you as the administrator of the endpoint.
+#     """
+#     cmd = "globus-connect-server login localhost"
+#     print(">>> Logging in to link your Globus identity to the endpoint")
+#     run_command(cmd)
 
 
 
