@@ -122,7 +122,12 @@ def create_storage_gateway(config):
     run_command(cmd)
 
 
-def get_gateway_id_by_name(name):
+def get_gateway_id_by_name(
+        name,
+        GCS_CLI_CLIENT_ID,
+        GCS_CLI_CLIENT_SECRET,
+        GCS_CLI_ENDPOINT_ID,
+    ):
     """
     Retrieves the storage gateway ID matching the given display name.
 
@@ -135,8 +140,15 @@ def get_gateway_id_by_name(name):
     Raises:
         RuntimeError: If the gateway name is not found.
     """
+
+    cmd = (
+    f"GCS_CLI_CLIENT_ID={GCS_CLI_CLIENT_ID} "
+    f"GCS_CLI_CLIENT_SECRET={GCS_CLI_CLIENT_SECRET} "
+    f"GCS_CLI_ENDPOINT_ID={GCS_CLI_ENDPOINT_ID} "
+    f"globus-connect-server storage-gateway list --format json"
+    )
     output = run_command(
-        "globus-connect-server storage-gateway list --format json",
+        cmd,
         capture_output=True
     )
 
@@ -164,14 +176,6 @@ def create_mapped_collection(config):
             - collection_path (str): Local path exposed to users
     """
 
-    gateway_config = config["gateway"]
-    gateway_name = gateway_config['gateway_name']
-    gateway_id = get_gateway_id_by_name(gateway_name)
-
-    collection_config = config["collection"]
-    collection_name = collection_config['collection_name']
-    collection_path = collection_config['collection_path']
-
     # Endpoint info for authentication
     GCS_CLI_CLIENT_ID = config.get("GCS_CLI_CLIENT_ID")
     GCS_CLI_CLIENT_SECRET = config.get("GCS_CLI_CLIENT_SECRET")
@@ -179,13 +183,23 @@ def create_mapped_collection(config):
     GCS_CLI_ENDPOINT_ID = read_json(info_path).get("endpoint_id")
 
 
+    gateway_config = config["gateway"]
+    gateway_name = gateway_config['gateway_name']
+    gateway_id = get_gateway_id_by_name(
+        gateway_name,
+        GCS_CLI_CLIENT_ID,
+        GCS_CLI_CLIENT_SECRET,
+        GCS_CLI_ENDPOINT_ID,
+    )
+
+    collection_config = config["collection"]
+    collection_name = collection_config['collection_name']
+    collection_path = collection_config['collection_path']
+
     # 1) Create the whole collection path 
     Path(collection_path).mkdir(parents=True, exist_ok=True)
 
     # 2) Create the mapped collection
-
-
-
     cmd = (
     f"GCS_CLI_CLIENT_ID={GCS_CLI_CLIENT_ID} "
     f"GCS_CLI_CLIENT_SECRET={GCS_CLI_CLIENT_SECRET} "
@@ -208,6 +222,8 @@ def login_localhost():
     cmd = "globus-connect-server login localhost"
     print(">>> Logging in to link your Globus identity to the endpoint")
     run_command(cmd)
+
+
 
 def destroy(config):
     """
