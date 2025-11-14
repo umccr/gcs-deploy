@@ -45,7 +45,7 @@ def main():
         create_storage_gateway(config)
         # if args.data_dock:
         create_mapped_collection(config) 
-        change_endpoint_owner(config)
+        # change_endpoint_owner(config)
 
     elif args.command == "destroy":
         destroy(config)

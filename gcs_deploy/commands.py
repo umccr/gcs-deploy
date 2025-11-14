@@ -36,11 +36,13 @@ def read_json(path):
     """
     with open(path) as f:
         return json.load(f)
+    
+    
 def get_gateway_id_by_name(
         name,
-        GCS_CLI_CLIENT_ID,
-        GCS_CLI_CLIENT_SECRET,
-        GCS_CLI_ENDPOINT_ID,
+        GCS_CLI_CLIENT_ID=None,
+        GCS_CLI_CLIENT_SECRET=None,
+        GCS_CLI_ENDPOINT_ID=None,
     ):
     """
     Retrieves the storage gateway ID matching the given display name.
@@ -55,11 +57,16 @@ def get_gateway_id_by_name(
         RuntimeError: If the gateway name is not found.
     """
 
+    env_vars = ""
+    if GCS_CLI_CLIENT_ID and GCS_CLI_CLIENT_SECRET and GCS_CLI_ENDPOINT_ID:
+        env_vars = (
+            f"GCS_CLI_CLIENT_ID={GCS_CLI_CLIENT_ID} "
+            f"GCS_CLI_CLIENT_SECRET={GCS_CLI_CLIENT_SECRET} "
+            f"GCS_CLI_ENDPOINT_ID={GCS_CLI_ENDPOINT_ID} "
+        )
     cmd = (
-    f"GCS_CLI_CLIENT_ID={GCS_CLI_CLIENT_ID} "
-    f"GCS_CLI_CLIENT_SECRET={GCS_CLI_CLIENT_SECRET} "
-    f"GCS_CLI_ENDPOINT_ID={GCS_CLI_ENDPOINT_ID} "
-    f"globus-connect-server storage-gateway list --format json"
+        f"{env_vars}"
+        f"globus-connect-server storage-gateway list --format json"
     )
     output = run_command(
         cmd,
@@ -216,6 +223,7 @@ def change_endpoint_owner(config):
 
     endpoint_config = config["endpoint"]
     owner = endpoint_config["owner"]
+    subscription_id = config["subscription-id"]
 
     # Endpoint info for authentication
     GCS_CLI_CLIENT_ID = config.get("GCS_CLI_CLIENT_ID")
@@ -223,6 +231,7 @@ def change_endpoint_owner(config):
     info_path = config["info_path"]
     GCS_CLI_ENDPOINT_ID = read_json(info_path).get("endpoint_id")
   
+    # 1) Change endpoint owner
     cmd = (
         f"GCS_CLI_CLIENT_ID={GCS_CLI_CLIENT_ID} "
         f"GCS_CLI_CLIENT_SECRET={GCS_CLI_CLIENT_SECRET} "
@@ -230,7 +239,23 @@ def change_endpoint_owner(config):
         f"globus-connect-server endpoint set-owner {owner}"
     )
     print(f">>> Changing endpoint owner to: {owner}")
-    run_command(cmd)    
+    run_command(cmd)
+    # 2) Login to the endpoint
+    cmd = (
+        f"globus-connect-server login {GCS_CLI_CLIENT_ID} "
+    )
+    run_command(cmd)
+    # 3) Set owner string (Advertised Owner)
+    cmd = ( 
+        f"globus-connect-server endpoint set-owner-string {owner}"
+    )
+    run_command(cmd)
+    # 4) Set subscription id and make endpoint private
+    cmd = ( 
+        f"globus-connect-server endpoint update --private --subscription-id {subscription_id}"
+    )
+    run_command(cmd)
+    
 
 
 # def login_localhost():
