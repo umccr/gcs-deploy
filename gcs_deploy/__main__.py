@@ -42,9 +42,6 @@ def main():
     if args.command == "deploy":
         setup_endpoint(config)
         setup_node()
-        create_storage_gateway(config)
-        # if args.data_dock:
-        create_mapped_collection(config) 
         change_owner(config)
 
     elif args.command == "destroy":
