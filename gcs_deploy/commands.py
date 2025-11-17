@@ -254,7 +254,7 @@ def change_owner(config):
 
     # 2) Login to the endpoint
     cmd = (
-        f"globus-connect-server login {client_id} "
+        f"globus-connect-server login  "
     )
     run_command(cmd)
     # 3) Set owner string (Advertised Owner)
@@ -278,8 +278,7 @@ def change_owner(config):
         f"globus-connect-server collection set-owner-string {collection_id} {owner}"
 
     )
-
-
+    run_command(cmd)
 
 
 
