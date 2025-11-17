@@ -3,32 +3,25 @@ import json
 from pathlib import Path
 import shlex
 
-def run_command(cmd, print_stdout=True):
 
-    print(f"\n>>> {cmd}")
+
+def run_command(cmd, capture_output=False):
+
     result = subprocess.run(
         cmd,
         shell=True, 
         text=True,
+        capture_output=capture_output
     )
-    if print_stdout:
+    if result.stdout:
         print(result.stdout.strip())
-    # Always print errors    
     if result.stderr:
         print("ERR:", result.stderr.strip())
+    if capture_output:
+        return result.stdout.strip()
 
-    return result.stdout.strip()
 
 def read_json(path):
-    """
-    Loads the config file from a json in the given path.
-
-    Args:
-        path (str): Path to the config file.
-
-    Returns:
-        dict: Parsed configuration values.
-    """
     with open(path) as f:
         return json.load(f)
     
@@ -92,18 +85,7 @@ def get_id_by_name(
         raise ValueError(f"Unknown type: {type}")
 
 def setup_endpoint(config):
-    """
-    Sets up the Globus Connect Server endpoint with metadata.
 
-    Args:
-        config (dict): Must include the following keys:
-            - endpoint_display_name (str)
-            - organization (str)
-            - owner (str)
-            - contact_email (str)
-            - project_id (str): Globus Project UUID under which to register the endpoint
-
-    """
     endpoint_config = config["endpoint"]
     display_name = endpoint_config["endpoint_display_name"]
     organization = endpoint_config["organization"]
@@ -130,13 +112,8 @@ def setup_endpoint(config):
     run_command(cmd)
 
 def setup_node():
-    """
-    Registers the current machine as a Globus Connect Server data transfer node.
-
-    This enables the server to participate in the endpoint's transfer infrastructure.
-    """
     cmd = "sudo globus-connect-server node setup"
-    print(">>> Registering node")
+    print(">>> Registering node <<<")
     run_command(cmd)
 
 
@@ -145,7 +122,6 @@ def change_owner(config):
 
     endpoint_config = config["endpoint"]
     owner = endpoint_config["owner"]
-    client_id = endpoint_config["client-id"]
     subscription_id = config["subscription-id"]
 
     # Endpoint info for authentication
