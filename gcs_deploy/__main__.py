@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument(
         "--data-dock",
         dest="data_dock",
-        action=argparse.BooleanOptionalAction,  # gives --data-dock / --no-data-dock
+        action=argparse.BooleanOptionalAction, 
         default=False,
         help="Create the DataDock mapped collection during deploy (default: off).",
     )

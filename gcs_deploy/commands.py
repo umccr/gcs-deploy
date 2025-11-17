@@ -3,26 +3,21 @@ import json
 from pathlib import Path
 import shlex
 
-def run_command(cmd, capture_output=False):
-    """
-    Runs a shell command using subprocess.
+def run_command(cmd, print_stdout=True):
 
-    Args:
-        cmd (str): The shell command to run.
-        capture_output (bool): If True, returns the command's stdout.
-
-    Returns:
-        str or None: Output if captured, otherwise None.
-    """
     print(f"\n>>> {cmd}")
-    result = subprocess.run(cmd, shell=True, text=True,
-                            capture_output=capture_output)
-    if result.stdout:
+    result = subprocess.run(
+        cmd,
+        shell=True, 
+        text=True,
+    )
+    if print_stdout:
         print(result.stdout.strip())
+    # Always print errors    
     if result.stderr:
         print("ERR:", result.stderr.strip())
-    if capture_output:
-        return result.stdout.strip()
+
+    return result.stdout.strip()
 
 def read_json(path):
     """
@@ -145,90 +140,6 @@ def setup_node():
     run_command(cmd)
 
 
-def create_storage_gateway(config):
-    """
-    Creates a POSIX storage gateway using the identity mapping file.
-
-    Args:
-        config (dict): Must include:
-            - gateway_name (str): Human-readable name for the gateway
-            - user_domain (str): Identity domain allowed to access it
-    """
-    gateway_config = config["gateway"]
-    gateway_name = gateway_config['gateway_name']
-    user_domain = gateway_config["user_domain"]
-    identity_mapping = gateway_config["identity_mapping"] 
-    # read the identity map from the config:
-    identity_mapping_str = json.dumps(identity_mapping)
-
-    # Endpoint info for authentication
-    GCS_CLI_CLIENT_ID = config.get("GCS_CLI_CLIENT_ID")
-    GCS_CLI_CLIENT_SECRET = config.get("GCS_CLI_CLIENT_SECRET")
-    info_path = config["info_path"]
-    GCS_CLI_ENDPOINT_ID = read_json(info_path).get("endpoint_id")
-    
-    cmd = (
-        f"GCS_CLI_CLIENT_ID={GCS_CLI_CLIENT_ID} "
-        f"GCS_CLI_CLIENT_SECRET={GCS_CLI_CLIENT_SECRET} "
-        f"GCS_CLI_ENDPOINT_ID={GCS_CLI_ENDPOINT_ID} "
-        f"globus-connect-server storage-gateway create posix "
-        f"\"{gateway_name}\" "
-        f"--domain {user_domain} "
-        f"--identity-mapping '{identity_mapping_str}'"
-    )
-
-    print(f">>> Creating storage gateway: {gateway_name}")
-    run_command(cmd)
-
-
-
-def create_mapped_collection(config):
-    """
-    Creates a mapped collection for a given storage gateway.
-
-    Args:
-        config (dict): Must include:
-            - gateway_name (str): Name of the storage gateway to link
-            - collection_name (str): Name shown in the Globus Web UI
-            - collection_path (str): Local path exposed to users
-    """
-
-    # Endpoint info for authentication
-    GCS_CLI_CLIENT_ID = config.get("GCS_CLI_CLIENT_ID")
-    GCS_CLI_CLIENT_SECRET = config.get("GCS_CLI_CLIENT_SECRET")
-    info_path = config["info_path"]
-    GCS_CLI_ENDPOINT_ID = read_json(info_path).get("endpoint_id")
-
-
-    gateway_config = config["gateway"]
-    gateway_name = gateway_config['gateway_name']
-    gateway_id = get_id_by_name(
-        gateway_name,
-        "gateway",
-        GCS_CLI_CLIENT_ID,
-        GCS_CLI_CLIENT_SECRET,
-        GCS_CLI_ENDPOINT_ID,
-    )
-
-    collection_config = config["collection"]
-    collection_name = collection_config['collection_name']
-    collection_path = collection_config['collection_path']
-
-    # 1) Create the whole collection path 
-    Path(collection_path).mkdir(parents=True, exist_ok=True)
-
-    # 2) Create the mapped collection
-    cmd = (
-    f"GCS_CLI_CLIENT_ID={GCS_CLI_CLIENT_ID} "
-    f"GCS_CLI_CLIENT_SECRET={GCS_CLI_CLIENT_SECRET} "
-    f"GCS_CLI_ENDPOINT_ID={GCS_CLI_ENDPOINT_ID} "
-    f"globus-connect-server collection create {gateway_id} "
-    f"{collection_path} \"{collection_name}\" "
-    f"--public"
-    )
-
-    print(f">>> Creating mapped collection: {collection_name}")
-    run_command(cmd)
 
 def change_owner(config):
 
@@ -267,33 +178,14 @@ def change_owner(config):
         f"globus-connect-server endpoint update --private --subscription-id {subscription_id}"
     )
     run_command(cmd)
-    # 5) Change collection owner
-    collection_id = get_id_by_name(
-        "CCGCM-DataDock",
-        "collection",
-    )
-
-    cmd = ( 
-        f"globus-connect-server collection set-owner {collection_id} {owner}"
-        f"globus-connect-server collection set-owner-string {collection_id} {owner}"
-
-    )
-    run_command(cmd)
-
-
 
 def destroy(config):
     """
     Cleans up the Globus Connect Server setup by:
-    1. Deleting the mapped collection
-    2. Deleting the storage gateway
+    1. Deleting all the mapped collection
+    2. Deleting all the storage gateway
     3. Cleaning up the endpoint (removes the endpoint config)
 
-    Args:
-        config (dict): Must include:
-            - collection_name (str): Display name of the mapped collection
-            - gateway_name (str): Display name of the storage gateway
-            - deployment_key_path (str): Path to deployment key (usually 'deployment-key.json')
     """
 
     collection_config = config["collection"]
