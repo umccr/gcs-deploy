@@ -38,25 +38,14 @@ def read_json(path):
         return json.load(f)
     
     
-def get_gateway_id_by_name(
+def get_id_by_name(
         name,
+        type,
         GCS_CLI_CLIENT_ID=None,
         GCS_CLI_CLIENT_SECRET=None,
         GCS_CLI_ENDPOINT_ID=None,
     ):
-    """
-    Retrieves the storage gateway ID matching the given display name.
-
-    Args:
-        name (str): The display name of the storage gateway.
-
-    Returns:
-        str: The storage gateway ID (UUID).
-
-    Raises:
-        RuntimeError: If the gateway name is not found.
-    """
-
+    
     env_vars = ""
     if GCS_CLI_CLIENT_ID and GCS_CLI_CLIENT_SECRET and GCS_CLI_ENDPOINT_ID:
         env_vars = (
@@ -64,27 +53,48 @@ def get_gateway_id_by_name(
             f"GCS_CLI_CLIENT_SECRET={GCS_CLI_CLIENT_SECRET} "
             f"GCS_CLI_ENDPOINT_ID={GCS_CLI_ENDPOINT_ID} "
         )
-    cmd = (
-        f"{env_vars}"
-        f"globus-connect-server storage-gateway list --format json"
-    )
-    output = run_command(
-        cmd,
-        capture_output=True
-    )
 
-    try:
-        result = json.loads(output)
-        gateway_list = result[0]["data"]
-    except (json.JSONDecodeError, KeyError, IndexError) as e:
-        raise RuntimeError("Failed to parse storage-gateway list output") from e
+    if type == "gateway":    
+        cmd = (
+            f"{env_vars}"
+            f"globus-connect-server storage-gateway list --format json"
+        )
+        output_with_envelop = run_command(
+            cmd,
+            capture_output=True
+        )
+        
+        output_with_envelop_json = json.loads(output_with_envelop)
+        gateway_list = output_with_envelop_json[0]["data"]
 
-    for gw in gateway_list:
-        if gw.get("display_name") == name:
-            return gw.get("id")
+        for gateway in gateway_list:
+            gateway_name = gateway["display_name"]
+            gateway_id = gateway["id"]
+            if gateway_name == name:
+                return gateway_id
+        
 
-    raise RuntimeError(f"Gateway with name '{name}' not found.")
+    elif type == "collection":
+        cmd = (
+            f"{env_vars}"
+            f"globus-connect-server collection list --format json"
+        )
 
+        output = run_command(
+            cmd,
+            capture_output=True
+        )
+
+        collection_list = json.loads(output)
+
+        for collection in collection_list:
+            collection_name = collection["display_name"]
+            collection_id = collection["id"]
+            if collection_name == name:
+                return collection_id
+        
+    else:
+        raise ValueError(f"Unknown type: {type}")
 
 def setup_endpoint(config):
     """
@@ -192,8 +202,9 @@ def create_mapped_collection(config):
 
     gateway_config = config["gateway"]
     gateway_name = gateway_config['gateway_name']
-    gateway_id = get_gateway_id_by_name(
+    gateway_id = get_id_by_name(
         gateway_name,
+        "gateway",
         GCS_CLI_CLIENT_ID,
         GCS_CLI_CLIENT_SECRET,
         GCS_CLI_ENDPOINT_ID,
@@ -219,10 +230,11 @@ def create_mapped_collection(config):
     print(f">>> Creating mapped collection: {collection_name}")
     run_command(cmd)
 
-def change_endpoint_owner(config):
+def change_owner(config):
 
     endpoint_config = config["endpoint"]
     owner = endpoint_config["owner"]
+    client_id = endpoint_config["client-id"]
     subscription_id = config["subscription-id"]
 
     # Endpoint info for authentication
@@ -238,11 +250,11 @@ def change_endpoint_owner(config):
         f"GCS_CLI_ENDPOINT_ID={GCS_CLI_ENDPOINT_ID} "
         f"globus-connect-server endpoint set-owner {owner}"
     )
-    print(f">>> Changing endpoint owner to: {owner}")
     run_command(cmd)
+
     # 2) Login to the endpoint
     cmd = (
-        f"globus-connect-server login {GCS_CLI_CLIENT_ID} "
+        f"globus-connect-server login {client_id} "
     )
     run_command(cmd)
     # 3) Set owner string (Advertised Owner)
@@ -255,19 +267,19 @@ def change_endpoint_owner(config):
         f"globus-connect-server endpoint update --private --subscription-id {subscription_id}"
     )
     run_command(cmd)
-    
+    # 5) Change collection owner
+    collection_id = get_id_by_name(
+        "CCGCM-DataDock",
+        "collection",
+    )
+
+    cmd = ( 
+        f"globus-connect-server collection set-owner {collection_id} {owner}"
+        f"globus-connect-server collection set-owner-string {collection_id} {owner}"
+
+    )
 
 
-# def login_localhost():
-#     """
-#     Links the Globus Connect Server to your personal Globus identity.
-
-#     This step opens a browser-based login to authenticate and authorize
-#     you as the administrator of the endpoint.
-#     """
-#     cmd = "globus-connect-server login localhost"
-#     print(">>> Logging in to link your Globus identity to the endpoint")
-#     run_command(cmd)
 
 
 
@@ -309,7 +321,7 @@ def destroy(config):
 
     # Step 2: Delete the storage gateway
     try:
-        gateway_id = get_gateway_id_by_name(gateway_name)
+        gateway_id = get_id_by_name(gateway_name,"gateway")
         run_command(f"globus-connect-server storage-gateway delete {gateway_id}")
         print(f">>> Storage gateway '{gateway_name}' deleted.")
     except Exception as e:
@@ -324,7 +336,7 @@ def destroy(config):
     
     # Step 4: Cleanup endpoint
     try:
-        run_command(f"sudo globus-connect-server endpoint cleanup -d {config['deployment_key_path']} --agree-to-delete-endpoint")
+        run_command(f"sudo globus-connect-server endpoint cleanup --agree-to-delete-endpoint")
         print(">>> Endpoint cleanup complete.")
     except Exception as e:
         print(f"!!! Failed to cleanup endpoint: {e}")

@@ -2,12 +2,13 @@ import argparse
 from gcs_deploy.commands import (
     read_json,
     setup_endpoint,
+    change_owner,
     setup_node,
-    change_endpoint_owner,
     create_storage_gateway,
     create_mapped_collection,
     destroy,
 )
+import shutil, sys
 
 
 def parse_args():
@@ -26,7 +27,6 @@ def parse_args():
      
     return parser.parse_args()
 
-import shutil, sys
 
 
 def ensure_gcs_installed():
@@ -45,7 +45,7 @@ def main():
         create_storage_gateway(config)
         # if args.data_dock:
         create_mapped_collection(config) 
-        # change_endpoint_owner(config)
+        change_owner(config)
 
     elif args.command == "destroy":
         destroy(config)
