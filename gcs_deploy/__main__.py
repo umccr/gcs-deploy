@@ -4,8 +4,6 @@ from gcs_deploy.commands import (
     setup_endpoint,
     change_owner,
     setup_node,
-    create_storage_gateway,
-    create_mapped_collection,
     destroy,
 )
 import shutil, sys
