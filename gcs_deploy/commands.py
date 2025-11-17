@@ -254,7 +254,7 @@ def change_owner(config):
 
     # 2) Login to the endpoint
     cmd = (
-        f"globus-connect-server login  "
+        f"globus-connect-server login localhost"
     )
     run_command(cmd)
     # 3) Set owner string (Advertised Owner)
@@ -350,5 +350,5 @@ def destroy(config):
 
     # Step 6: Logout from Globus GCS session    
     print(">>> Logging out of Globus GCS session")
-    run_command("globus-connect-server logout")
+    run_command("globus-connect-server logout --yes")
 
