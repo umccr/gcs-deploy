@@ -21,6 +21,9 @@ def run_command(cmd, capture_output=False):
         return result.stdout.strip()
 
 
+
+
+
 def read_json(path):
     with open(path) as f:
         return json.load(f)
@@ -113,7 +116,7 @@ def setup_endpoint(config):
 
 def setup_node():
     cmd = "sudo globus-connect-server node setup"
-    print(">>> Registering node <<<")
+    print(">>> Registering node")
     run_command(cmd)
 
 
@@ -156,43 +159,7 @@ def change_owner(config):
     run_command(cmd)
 
 def destroy(config):
-    """
-    Cleans up the Globus Connect Server setup by:
-    1. Deleting all the mapped collection
-    2. Deleting all the storage gateway
-    3. Cleaning up the endpoint (removes the endpoint config)
 
-    """
-
-    collection_config = config["collection"]
-    collection_name = collection_config['collection_name']
-
-    gateway_config = config["gateway"]
-    gateway_name = gateway_config['gateway_name']
-
-    # Step 1: Delete the mapped collection
-    try:
-        collections_out = run_command(
-            "globus-connect-server collection list --format json",
-            capture_output=True
-        )
-        collections = json.loads(collections_out)
-        collection_id = next(
-            c["id"] for c in collections if c["display_name"] == collection_name
-        )
-        run_command(f"globus-connect-server collection update {collection_id} --no-delete-protected")
-        run_command(f"globus-connect-server collection delete {collection_id}")
-        print(f">>> Collection '{collection_name}' deleted.")
-    except Exception as e:
-        print(f"!!! Failed to delete collection: {e}")
-
-    # Step 2: Delete the storage gateway
-    try:
-        gateway_id = get_id_by_name(gateway_name,"gateway")
-        run_command(f"globus-connect-server storage-gateway delete {gateway_id}")
-        print(f">>> Storage gateway '{gateway_name}' deleted.")
-    except Exception as e:
-        print(f"!!! Failed to delete storage gateway: {e}")
 
     # Step 3: Cleanup local node
     try:
