@@ -48,7 +48,7 @@ This sets up:
 - Changes the endpoint owner
 
 
-During the deployment process, you will be prompted to log in manually to complete the Globus endpoint registration and authentication steps.
+During the deployment process, you will be prompted to log in manually multiple times to complete the Globus endpoint registration and authentication steps.
 
 
 ### Destroy
@@ -80,7 +80,7 @@ You must provide a JSON file like this:
   "endpoint": {
     "endpoint_display_name": "AWS-Endpoint",
     "organization": "The University of Melbourne",
-    "owner": "fjimenezibar@unimelb.edu.au",
+    "owner": "felipe.jimenezibarra@unimelb.edu.au",
     "contact_email": "felipe.jimenezibarra@unimelb.edu.au",
     "project_name": "My Project"
   },
