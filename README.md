@@ -80,14 +80,15 @@ You must provide a JSON file like this:
   "endpoint": {
     "endpoint_display_name": "AWS-Endpoint",
     "organization": "The University of Melbourne",
-    "owner": "felipe.jimenezibarra@unimelb.edu.au",
-    "contact_email": "felipe.jimenezibarra@unimelb.edu.au",
-    "project_name": "My Project"
+    "owner": "user@unimelb.edu.au",
+    "contact_email": "contact@unimelb.edu.au",
+    "project_name": "Project Name"
   },
+  "deployment_key_path": "deployment-key.json", 
+  "info_path": "/var/lib/globus-connect-server/info.json",
   "GCS_CLI_CLIENT_ID": "your-client-id",
   "GCS_CLI_CLIENT_SECRET": "your-client-secret",
-  "subscription-id": "your-subscription-id",
-  "info_path": "/var/lib/globus-connect-server/info.json"
+  "subscription-id": "your-subscription-id"
 }
 ```
 
@@ -99,8 +100,9 @@ You must provide a JSON file like this:
   - **owner**: Email address of the endpoint owner
   - **contact_email**: Contact email for the endpoint
   - **project_name**: Name of the project for this endpoint
+
+- **info_path**: Path to the Globus Connect Server info file (typically `/var/lib/globus-connect-server/info.json`)
+- **deployment_key_path**: Path where the deployment key JSON file is stored (for example, `deployment-key.json` alongside your config file)
 - **GCS_CLI_CLIENT_ID**: Globus client ID for authentication
 - **GCS_CLI_CLIENT_SECRET**: Globus client secret for authentication
-- **subscription-id**: Your Globus subscription ID
-- **info_path**: Path to the Globus Connect Server info file (typically `/var/lib/globus-connect-server/info.json`)
-
+- **subscription-id**: The Globus subscription UUID 
