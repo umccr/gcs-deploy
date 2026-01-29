@@ -1,6 +1,6 @@
 # GCS Deploy
 
-**GCS Deploy** is a Python utility to automate the full deployment and destruction of a [Globus Connect Server](https://docs.globus.org/globus-connect-server/) endpoint. It sets up a fully functional endpoint with a storage gateway, identity mapping, and mapped collection—all driven by a single configuration JSON file.
+**GCS Deploy** is a Python utility to automate the deployment and destruction of a [Globus Connect Server](https://docs.globus.org/globus-connect-server/) endpoint. It sets up a Globus endpoint with a registered node—all driven by a single configuration JSON file.
 
 ⚠️ Globus Connect Server v5 (https://docs.globus.org/globus-connect-server/v5/) is assumed to be installed on the target system.
 
@@ -45,11 +45,10 @@ This sets up:
 
 - A Globus endpoint
 - A registered node
-- A storage gateway (POSIX)
-- A mapped collection
+- Changes the endpoint owner
 
 
-During the deployment process, you will be prompted to log in manually twice to complete the Globus endpoint registration and authentication steps.
+During the deployment process, you will be prompted to log in manually multiple times to complete the Globus endpoint registration and authentication steps.
 
 
 ### Destroy
@@ -58,15 +57,15 @@ During the deployment process, you will be prompted to log in manually twice to 
 gcs-deploy destroy path/to/config.json
 ```
 
-This tears down the above setup (in reverse):
+This tears down the setup:
 
-- Deletes the mapped collection
-- Deletes the storage gateway
-- Cleans up the node and endpoint
+- Cleans up the node
+- Cleans up the endpoint
 - Restarts Apache services
+- Logs out of Globus GCS session
 
 
-During destroy, you will be prompted once for authentication to authorize the removal of the Globus endpoint.
+During destroy, you will be prompted for authentication to authorize the removal of the Globus endpoint.
 
 
 
@@ -78,25 +77,30 @@ You must provide a JSON file like this:
 
 ```json
 {
-  "endpoint_display_name": "AWS-Endpoint",
-  "organization": "The University of Melbourne",
-  "owner": "fjimenezibar@unimelb.edu.au",
-  "contact_email": "felipe.jimenezibarra@unimelb.edu.au",
-  "gateway_name": "My Host Gateway",
-  "user_domain": "unimelb.edu.au",
-  "collection_name": "My Collection",
-  "collection_path": "/home/my-user/",
-  "deployment_key_path": "deployment-key.json",
-  "identity_mapping": {
-    "DATA_TYPE": "expression_identity_mapping#1.0.0",
-    "mappings": [
-      {
-        "source": "{username}",
-        "match": ".*@unimelb\.edu\.au",
-        "output": "my-user"
-      }
-    ]
-  }
+  "endpoint": {
+    "endpoint_display_name": "AWS-Endpoint",
+    "organization": "The University of Melbourne",
+    "owner": "felipe.jimenezibarra@unimelb.edu.au",
+    "contact_email": "felipe.jimenezibarra@unimelb.edu.au",
+    "project_name": "My Project"
+  },
+  "GCS_CLI_CLIENT_ID": "your-client-id",
+  "GCS_CLI_CLIENT_SECRET": "your-client-secret",
+  "subscription-id": "your-subscription-id",
+  "info_path": "/var/lib/globus-connect-server/info.json"
 }
 ```
+
+### Configuration Parameters
+
+- **endpoint**: Object containing endpoint configuration
+  - **endpoint_display_name**: The display name for your Globus endpoint
+  - **organization**: Your organization name
+  - **owner**: Email address of the endpoint owner
+  - **contact_email**: Contact email for the endpoint
+  - **project_name**: Name of the project for this endpoint
+- **GCS_CLI_CLIENT_ID**: Globus client ID for authentication
+- **GCS_CLI_CLIENT_SECRET**: Globus client secret for authentication
+- **subscription-id**: Your Globus subscription ID
+- **info_path**: Path to the Globus Connect Server info file (typically `/var/lib/globus-connect-server/info.json`)
 
